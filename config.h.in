@@ -1,0 +1,10 @@
+#ifndef MAP_CONFIG_H
+#define MAP_CONFIG_H
+
+#define PRJ_VERSION_MAJOR           @map_VERSION_MAJOR@
+#define PRJ_VERSION_MINOR           @map_VERSION_MINOR@
+#define PRJ_VERSION_PATCH           @map_VERSION_PATCH@
+
+#define PRJ_VERSION   v@map_VERSION_MAJOR@_@map_VERSION_MINOR@_@map_VERSION_PATCH@
+
+#endif //MAP_CONFIG_H
