@@ -136,7 +136,7 @@ else(JS_ONLY)
 	message(STATUS "${prjname}: Setting compilation target to WASM")
   set(CMAKE_EXECUTABLE_SUFFIX ".js")
 	set_target_properties( ${prjname} PROPERTIES LINK_FLAGS "${URE_LINK_FLAGS} -s WASM=1 -s USE_WEBGL2=1 -s FULL_ES3=1 
-                                                        -s EXPORTED_RUNTIME_METHODS=['UTF8ToString'] 
+                                                        -s EXPORTED_RUNTIME_METHODS=['UTF8ToString'] -s ALLOW_MEMORY_GROWTH 
                                                         --preload-file ../resources@resources -s EXPORTED_FUNCTIONS='[_main]'")
 endif(JS_ONLY)
 else(ENABLE_WASM)
