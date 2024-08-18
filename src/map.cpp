@@ -15,6 +15,7 @@
  *************************************************************************************************/
 
 #include "map.h"
+#include "tile_layer.h"
 
 #include <ure_utils.h>
 #include <ure_image.h>
@@ -22,13 +23,13 @@
 #include <ure_resources_collector.h>
 #include <ure_scene_graph.h>
 #include <ure_scene_layer_node.h>
-#include <widgets/ure_layer.h>
+
 
 #include <core/utils.h>
   
 Map::Map( int argc, char** argv )
   : m_bFullScreen(false), m_position{0,0}, m_size{1024,768}, m_fb_size{0,0},
-    m_maxLevels( 19 ), m_curLevel(0)
+    m_tile_size{256,256}, m_maxLevels( 19 ), m_curLevel(0)
 {
   init(argc, argv);
 }
@@ -59,10 +60,11 @@ void Map::dispose()
   ure::Application::get_instance()->finalize();
 }
 
- void Map::init( [[__maybe_unused__]] int argc, [[__maybe_unused__]] char** argv )
+ void Map::init( [[__maybe_unused__]] int argc, [[__maybe_unused__]] char** argv ) noexcept
 {
   const std::string sShadersPath( "./resources/shaders/" );
   const std::string sMediaPath  ( "./resources/media/" );
+  const std::string sTilesURL   ( "https://tile.openstreetmap.org/%u/%u/%u.png" ); 
 
   ure::Application::initialize( core::unique_ptr<ure::ApplicationEvents>(this,false), sShadersPath, sMediaPath );
 
@@ -115,7 +117,7 @@ void Map::dispose()
     return ;
   }
 
-  glm::mat4 mProjection = glm::perspectiveFov(45.0f, (float)m_size.width, (float)m_size.height, 0.1f, 500.0f);
+  glm::mat4 mProjection = glm::perspectiveFov(45.0f, (float)m_size.width, (float)m_size.height, 0.1f, 100.0f);
 
   m_pViewPort   = new(std::nothrow) ure::ViewPort( pSceneGraph, mProjection );
   if ( m_pViewPort == nullptr )
@@ -125,29 +127,33 @@ void Map::dispose()
     return ;
   }
 
-  loadResources();
+  load_resources();
 
-  addCamera();
+  add_camera();
 
-  addLevel0();
+  add_zoom_levels( sTilesURL );
 }
 
-void Map::loadResources()
+void Map::load_resources() noexcept
 {
   ure::Image    bkImage; 
 
   bkImage.load( ure::Image::loader_t::eStb, "./resources/media/images/0-0-0.png" );
 
-  ure::Texture*  pTexture = new(std::nothrow) ure::Texture( std::move(bkImage) );
+  std::unique_ptr<ure::Texture>  txt = std::make_unique<ure::Texture>( std::move(bkImage) );
 
-  ure::ResourcesCollector::get_instance()->attach("0-0-0", pTexture);  
+  auto result = ure::ResourcesCollector::get_instance()->attach<ure::Texture>("0-0-0", std::move(txt) );  
+  if ( result.first == false )
+  {
+    // todo
+  }
 }
 
-void Map::addCamera()
+void Map::add_camera() noexcept
 {
   ure::Camera*  pCamera =  new ure::Camera( true );
 
-  glm::vec3 cameraPosition = glm::vec3(0,0,2);  // Camera is at (0,0,1), in World Space
+  glm::vec3 cameraPosition = glm::vec3(0,0,1);  // Camera is at (0,0,1), in World Space
   glm::vec3 cameraTarget   = glm::vec3(0,0,0);  // and looks at the origin
   glm::vec3 upVector       = glm::vec3(0,1,0);  // Head is up (set to 0,-1,0 to look upside-down)
 
@@ -161,28 +167,35 @@ void Map::addCamera()
   m_pViewPort->get_scene()->add_scene_node( new ure::SceneCameraNode( "MainCamera", pCamera ) );
 }
 
-void Map::addLevel0()
+void Map::add_zoom_levels( const std::string& url ) noexcept
 {
-  ure::widgets::Layer* pLayer = new(std::nothrow) ure::widgets::Layer( *m_pViewPort );
-  
-  m_pWindow->connect(pLayer);
+  for ( ure::int_t zl = 0; zl < max_levels(); zl++ )
+  {
+    ure::widgets::Layer* pLayer = new(std::nothrow) TileLayer( *m_pViewPort, m_tile_size, zl, url );
+    
+    m_pWindow->connect(pLayer);
 
-  pLayer->set_visible( true );
-  pLayer->set_enabled( true );
+    pLayer->set_visible( (zl==0) );
+    pLayer->set_enabled( (zl==0) );
 
-  pLayer->set_position( -1.0f*m_size.width/2, -1.0f*m_size.height/2, true );
+    pLayer->set_position( -1.0f*m_size.width/2, -1.0f*m_size.height/2, true );
 
-  ure::Texture* pTexture = ure::ResourcesCollector::get_instance()->find<ure::Texture>("0-0-0");
-  
-  pLayer->set_background( pTexture, ure::widgets::Widget::BackgroundOptions::eboAsIs );
+    ure::Texture* pTexture = ure::ResourcesCollector::get_instance()->find<ure::Texture>("0-0-0");
+    
+    pLayer->set_background( pTexture, ure::widgets::Widget::BackgroundOptions::eboAsIs );
 
-  ure::SceneLayerNode* pNode = new(std::nothrow) ure::SceneLayerNode( "Layer1", pLayer );
-  
-  glm::mat4 mModel =  glm::ortho( -1.0f*(float)m_size.width/2, (float)m_size.width/2, (float)m_size.height/2, -1.0f*(float)m_size.height/2, 0.1f, 1000.0f );
-  pNode->set_model_matrix( mModel );
-  pNode->get_model_matrix().translate( 0, 0, 0 );
+    ure::SceneLayerNode* pNode = new(std::nothrow) ure::SceneLayerNode( core::utils::format("Layer%d", zl ), pLayer );
+    
+    ure::float_t mx = m_size.width/2;
+    ure::float_t my = m_size.height/2;
+    //glm::mat4 mModel =  glm::ortho( -1.0f*(float)m_size.width/2, (float)m_size.width/2, (float)m_size.height/2, -1.0f*(float)m_size.height/2, 1.0f, 100.0f );
+    glm::mat4 mModel =  glm::ortho( -1.0f*mx, mx, my, -1.0f*my, 0.1f, 100.0f );
 
-  m_pViewPort->get_scene()->add_scene_node( pNode );  
+    pNode->set_model_matrix( mModel );
+    pNode->get_model_matrix().translate( 0, 0, 0 );
+
+    m_pViewPort->get_scene()->add_scene_node( pNode );  
+  }
 }
 
 /////////////////////////////////////////////////////
@@ -191,6 +204,9 @@ void Map::addLevel0()
 
 ure::void_t  Map::on_mouse_scroll( [[maybe_unused]] ure::Window* pWindow, [[maybe_unused]] ure::double_t dOffsetX, [[maybe_unused]] ure::double_t dOffsetY ) noexcept 
 {
+  ure::SceneLayerNode* current_layer_node = m_pViewPort->get_scene()->get_scene_node<ure::SceneLayerNode>("SceneNode", core::utils::format("Layer%d", m_curLevel ) );
+  ure::SceneLayerNode* new_layer_node     = nullptr;
+
   // Increase level
   if ( dOffsetY > 0.0f )
   {
@@ -204,6 +220,21 @@ ure::void_t  Map::on_mouse_scroll( [[maybe_unused]] ure::Window* pWindow, [[mayb
     if ( m_curLevel > 0 )
       --m_curLevel;
   }
+
+  new_layer_node = m_pViewPort->get_scene()->get_scene_node<ure::SceneLayerNode>("SceneNode", core::utils::format("Layer%d", m_curLevel ) );
+
+  if ( current_layer_node )
+  {
+    current_layer_node->get_object<TileLayer>()->set_enabled(false);
+    current_layer_node->get_object<TileLayer>()->set_visible(false);
+  }
+
+  if ( new_layer_node )
+  {
+    new_layer_node->get_object<TileLayer>()->set_enabled(true);
+    new_layer_node->get_object<TileLayer>()->set_visible(true);
+  }
+
 
   printf("scroll current level [%d] %f  %f \n", m_curLevel, dOffsetX, dOffsetY );
 }
@@ -247,16 +278,6 @@ ure::void_t Map::on_run()
   // Update background color
   m_pViewPort->get_scene()->set_background( 0.2f, 0.2f, 0.2f, 0.0f );
 
-/*
-  ure::SceneLayerNode* pLayer1 = m_pViewPort->get_scene()->get_scene_node<ure::SceneLayerNode>("SceneNode","Layer1");
-  if ( pLayer1 != nullptr )
-  {
-    pLayer1->get_model_matrix().rotateX(0.01);
-    pLayer1->get_model_matrix().rotateY(0.01);
-    pLayer1->get_model_matrix().rotateZ(0.01);
-  }
-*/
-
   ///////////////
   m_pViewPort->clear_buffer( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );
 
@@ -293,9 +314,32 @@ ure::void_t Map::on_finalize_error(/* @todo */)
 // ure::ResourcesFetcherEvents implementation
 /////////////////////////////////////////////////////
 
-ure::void_t Map::on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) 
+ure::void_t Map::on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) 
 {
+  if ( ure::ResourcesCollector::get_instance()->contains( name ) == false )
+  {
+    if ( typeid(ure::Texture) == type )
+    {
+      ure::Image    bkImage; 
 
+      if ( bkImage.create( ure::Image::loader_t::eStb, data, length ) == true )
+      {
+        std::unique_ptr<ure::Texture>  txt = std::make_unique<ure::Texture>( std::move(bkImage) );
+
+        auto result = ure::ResourcesCollector::get_instance()->attach<ure::Texture>( name,  std::move(txt) );  
+        if ( result.first == false )
+        {
+          // @todo
+        }
+
+      }
+      else
+      {
+        // @todo
+      }
+    }
+    //ure::ResourcesCollector::get_instance()->attach( name,  )
+  }
 }
 
 ure::void_t Map::on_download_failed   ( [[maybe_unused]] const std::string& name ) 

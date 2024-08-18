@@ -14,6 +14,9 @@
  *
  *************************************************************************************************/
 
+#ifndef MAP_H
+#define MAP_H
+
 #include <ure_application.h>
 #include <ure_resources_fetcher.h>
 #include <ure_window.h>
@@ -34,21 +37,30 @@ public:
   /***/
   void dispose();
 
+  /***/
+  constexpr ure::int_t max_levels() const
+  { return m_maxLevels; }
+  
+
 protected:
   /***/
-  void init( [[__maybe_unused__]] int argc, [[__maybe_unused__]] char** argv );
+  void init( [[__maybe_unused__]] int argc, [[__maybe_unused__]] char** argv ) noexcept;
   /***/
-  void loadResources();
+  void load_resources() noexcept;
   /***/
-  void addCamera();
+  void add_camera() noexcept;
   /***/
-  void addLevel0();
+  void add_zoom_levels( const std::string& url ) noexcept;
 
 // ure::WindowEvents implementation
 protected:
   /***/
   virtual ure::void_t  on_mouse_scroll( [[maybe_unused]] ure::Window* pWindow, [[maybe_unused]] ure::double_t dOffsetX, [[maybe_unused]] ure::double_t dOffsetY ) noexcept override;
-
+  /***/
+  virtual ure::void_t  on_mouse_move( [[maybe_unused]] ure::Window* pWindow, [[maybe_unused]] ure::double_t dPosX, [[maybe_unused]] ure::double_t dPosY ) noexcept override
+  {
+    printf( "x:%f y:%f\n", dPosX, dPosY );
+  }
 // ure::ApplicationEvents implementation  
 protected:
   /***/
@@ -75,7 +87,7 @@ protected:
 // ure::ResourcesFetcherEvents implementation
 protected:  
   /***/
-  virtual ure::void_t on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) override;
+  virtual ure::void_t on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) override;
   /***/
   virtual ure::void_t on_download_failed   ( [[maybe_unused]] const std::string& name ) override;
 
@@ -84,11 +96,13 @@ private:
   ure::position_t<ure::int_t> m_position;
   ure::Size                   m_size;
   ure::Size                   m_fb_size;    // Frame Buffer Size
+  ure::Size                   m_tile_size;
 
   ure::Window*                m_pWindow;
   ure::ViewPort*              m_pViewPort;
 
-  ure::int_t                  m_maxLevels;
+  const ure::int_t            m_maxLevels;
   ure::int_t                  m_curLevel;
 };
 
+#endif // MAP_H
