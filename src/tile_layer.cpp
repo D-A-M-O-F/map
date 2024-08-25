@@ -21,16 +21,21 @@
 
 #include <core/utils.h>
   
-TileLayer::TileLayer( ure::ViewPort& rViewPort, const ure::Size& tile_size, ure::word_t zoom, const std::string& url ) noexcept
+TileLayer::TileLayer( ure::ViewPort& rViewPort, const ure::Size& tile_size, ure::word_t zoom, const std::string& url ) noexcept(true)
   : ure::widgets::Layer( rViewPort ), m_tile_size(tile_size), 
     m_zoom_level( zoom ), m_max_tiles( 1 << zoom ),
     m_tile_area( m_tile_size.width*m_max_tiles, m_tile_size.height*m_max_tiles ),
     m_url(url)
 {
-  
+  m_rc = std::make_unique<ure::ResourcesCollector>();
 }
 
-bool     TileLayer::on_draw( [[maybe_unused]] const ure::Recti& rect ) noexcept 
+TileLayer::~TileLayer() noexcept(true)
+{
+
+}
+
+bool     TileLayer::on_widget_draw( [[maybe_unused]] const ure::Recti& rect ) noexcept(true) 
 { 
   for ( ure::word_t y = 0; y < m_max_tiles; ++y )
   {
@@ -39,16 +44,19 @@ bool     TileLayer::on_draw( [[maybe_unused]] const ure::Recti& rect ) noexcept
       std::string name     = core::utils::format( "%u-%u-%u", m_zoom_level, x, y  );
       std::string resource = core::utils::format( m_url.c_str(), m_zoom_level, x,y );
 
-      ure::Texture* texture = ure::ResourcesCollector::get_instance()->find<ure::Texture>(name);
-      if ( texture == nullptr )
+      auto texture = m_rc->find<ure::Texture>(name);
+
+      if ( texture.has_value() == false )
       {
-        ure::ResourcesFetcher::get_instance()->fetch( name, typeid(ure::Texture), resource );
+        ure::ResourcesFetcher::get_instance()->fetch( *this, name, typeid(ure::Texture), resource );
       }
       else
       {
         // Default Vertices coordinates 
         ure::Position   pos  = get_position();
-        ure::Size       size = get_size();
+        ure::Size       size = get_size();   
+
+
         ure::double_t   xr   = 1.0f;
         ure::double_t   yr   = 1.0f;
 
@@ -89,7 +97,7 @@ bool     TileLayer::on_draw( [[maybe_unused]] const ure::Recti& rect ) noexcept
 
         /*--------------------------------*/
 
-        draw_rect( vertices, texture_coordinates, *texture, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE );
+        draw_rect( vertices, texture_coordinates, *texture->get(), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE );
       }
     }
   
@@ -97,3 +105,42 @@ bool     TileLayer::on_draw( [[maybe_unused]] const ure::Recti& rect ) noexcept
 
   return true; 
 }
+
+
+/////////////////////////////////////////////////////
+// ure::ResourcesFetcherEvents implementation
+/////////////////////////////////////////////////////
+
+ure::void_t TileLayer::on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) noexcept(true)
+{
+  if ( m_rc->contains( name ) == false )
+  {
+    if ( typeid(ure::Texture) == type )
+    {
+      ure::Image    bkImage; 
+
+      if ( bkImage.create( ure::Image::loader_t::eStb, data, length ) == true )
+      {
+        std::unique_ptr<ure::Texture>  txt = std::make_unique<ure::Texture>( std::move(bkImage) );
+
+        auto result = m_rc->attach<ure::Texture>( name,  std::move(txt) );  
+        if ( result.first == false )
+        {
+          // @todo
+        }
+
+      }
+      else
+      {
+        // @todo
+      }
+    }
+    //ure::ResourcesCollector::get_instance()->attach( name,  )
+  }
+}
+
+ure::void_t TileLayer::on_download_failed   ( [[maybe_unused]] const std::string& name ) noexcept(true)
+{
+
+}
+

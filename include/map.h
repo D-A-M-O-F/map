@@ -19,6 +19,7 @@
 
 #include <ure_application.h>
 #include <ure_resources_fetcher.h>
+#include <ure_resources_collector.h>
 #include <ure_window.h>
 #include <ure_view_port.h>
 #include <ure_position.h>
@@ -57,10 +58,12 @@ protected:
   /***/
   virtual ure::void_t  on_mouse_scroll( [[maybe_unused]] ure::Window* pWindow, [[maybe_unused]] ure::double_t dOffsetX, [[maybe_unused]] ure::double_t dOffsetY ) noexcept override;
   /***/
-  virtual ure::void_t  on_mouse_move( [[maybe_unused]] ure::Window* pWindow, [[maybe_unused]] ure::double_t dPosX, [[maybe_unused]] ure::double_t dPosY ) noexcept override
-  {
-    printf( "x:%f y:%f\n", dPosX, dPosY );
-  }
+  virtual ure::void_t  on_mouse_move( [[maybe_unused]] ure::Window* pWindow, [[maybe_unused]] ure::double_t x, [[maybe_unused]] ure::double_t y ) noexcept override;
+  /***/
+  virtual ure::void_t  on_mouse_button_pressed( [[maybe_unused]] ure::Window* pWindow, [[maybe_unused]] ure::WindowEvents::mouse_button_t button, [[maybe_unused]] ure::int_t mods ) noexcept override;
+  /***/
+  virtual ure::void_t  on_mouse_button_released( [[maybe_unused]] ure::Window* pWindow, [[maybe_unused]] ure::WindowEvents::mouse_button_t button, [[maybe_unused]] ure::int_t mods ) noexcept override;
+
 // ure::ApplicationEvents implementation  
 protected:
   /***/
@@ -87,22 +90,30 @@ protected:
 // ure::ResourcesFetcherEvents implementation
 protected:  
   /***/
-  virtual ure::void_t on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) override;
+  virtual ure::void_t on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) noexcept(true) override;
   /***/
-  virtual ure::void_t on_download_failed   ( [[maybe_unused]] const std::string& name ) override;
+  virtual ure::void_t on_download_failed   ( [[maybe_unused]] const std::string& name ) noexcept(true) override;
 
 private:
-  bool                        m_bFullScreen;
-  ure::position_t<ure::int_t> m_position;
-  ure::Size                   m_size;
-  ure::Size                   m_fb_size;    // Frame Buffer Size
-  ure::Size                   m_tile_size;
+  using resource_collector_t = std::unique_ptr<ure::ResourcesCollector>;
 
-  ure::Window*                m_pWindow;
-  ure::ViewPort*              m_pViewPort;
+  resource_collector_t      m_rc;           /* Resource Collector local to map */
 
-  const ure::int_t            m_maxLevels;
-  ure::int_t                  m_curLevel;
+  bool                      m_bFullScreen;
+  ure::Position             m_position;
+  ure::Size                 m_size;
+  ure::Size                 m_fb_size;      /* Frame Buffer Size */
+  ure::Size                 m_tile_size;
+
+  ure::Window*              m_pWindow;
+  ure::ViewPort*            m_pViewPort;
+
+  const ure::int_t          m_maxLevels;
+  ure::int_t                m_curLevel;
+
+  ure::Position_d           m_mouse_last_pos;
+  ure::bool_t               m_move_map;
+
 };
 
 #endif // MAP_H
