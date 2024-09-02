@@ -112,8 +112,8 @@ void Map::init( [[__maybe_unused__]] int argc, [[__maybe_unused__]] char** argv 
 
   //////////////////////////////////////////////////////////////////////////
 
-  ure::SceneGraph* pSceneGraph = new(std::nothrow) ure::SceneGraph();
-  if ( pSceneGraph == nullptr )
+  std::unique_ptr<ure::SceneGraph> scene_graph = std::make_unique<ure::SceneGraph>();
+  if ( scene_graph == nullptr )
   {
     ure::utils::log( "Unable to allocate SceneGraph" );
     return ;
@@ -121,9 +121,8 @@ void Map::init( [[__maybe_unused__]] int argc, [[__maybe_unused__]] char** argv 
 
   glm::mat4 mProjection = glm::perspectiveFov(45.0f, (float)m_size.width, (float)m_size.height, 0.1f, 1000.0f);
 
-  m_pViewPort   = new(std::nothrow) ure::ViewPort( pSceneGraph, mProjection );
+  m_pViewPort   = new(std::nothrow) ure::ViewPort( std::move(scene_graph), mProjection );
   if ( m_pViewPort == nullptr )
-  if ( pSceneGraph == nullptr )
   {
     ure::utils::log( "Unable to allocate ViewPort" );
     return ;
@@ -153,35 +152,38 @@ void Map::load_resources() noexcept(true)
 
 void Map::add_camera() noexcept(true)
 {
-  ure::Camera* camera = new(std::nothrow) ure::Camera( true );
+  ure::camera_ptr camera = std::make_shared<ure::Camera>( true );
   if ( camera == nullptr )
     return ;
 
   /* Initially we are going to use 2D in 3D space, that means no view matrix to be applied in the MVP */
   camera->set_view_matrix( glm::mat4(1) );
 
-  m_pViewPort->get_scene()->add_scene_node( new ure::SceneCameraNode( "MainCamera", camera ) );
+  if ( m_pViewPort->has_scene_graph() )
+  {
+    m_pViewPort->get_scene().add_scene_node( new ure::SceneCameraNode( "MainCamera", camera ) );
+  }
 }
 
 void Map::add_zoom_levels( const std::string& url ) noexcept(true)
 {
   for ( ure::int_t zl = 0; zl < max_levels(); zl++ )
   {
-    ure::widgets::Layer* pLayer = new(std::nothrow) TileLayer( *m_pViewPort, m_tile_size, zl, url );
+    std::shared_ptr<ure::widgets::Layer> layer = std::make_shared<TileLayer>( *m_pViewPort, m_tile_size, zl, url );
     
-    m_pWindow->connect(pLayer);
+    m_pWindow->connect(layer->get_windows_events());
 
-    pLayer->set_visible( (zl==0) );
-    pLayer->set_enabled( (zl==0) );
+    layer->set_visible( (zl==0) );
+    layer->set_enabled( (zl==0) );
 
-    pLayer->set_position( -1.0f*m_size.width/2, -1.0f*m_size.height/2, true );
+    layer->set_position( -1.0f*m_size.width/2, -1.0f*m_size.height/2, true );
     
     auto texture = m_rc->find<ure::Texture>("0-0-0");
     
     if ( texture.has_value() )
-      pLayer->set_background( texture.value(), ure::widgets::Widget::BackgroundOptions::eboAsIs );
+      layer->set_background( texture.value(), ure::widgets::Widget::BackgroundOptions::eboAsIs );
 
-    ure::SceneLayerNode* pNode = new(std::nothrow) ure::SceneLayerNode( core::utils::format("Layer%d", zl ), pLayer );
+    ure::SceneLayerNode* pNode = new(std::nothrow) ure::SceneLayerNode( core::utils::format("Layer%d", zl ), layer );
     
     ure::float_t mx = m_size.width/2;
     ure::float_t my = m_size.height/2;
@@ -191,7 +193,7 @@ void Map::add_zoom_levels( const std::string& url ) noexcept(true)
     pNode->set_model_matrix( mModel );
     pNode->get_model_matrix().translate( 0, 0, 0 );
 
-    m_pViewPort->get_scene()->add_scene_node( pNode );  
+    m_pViewPort->get_scene().add_scene_node( pNode );  
   }
 }
 
@@ -201,7 +203,7 @@ void Map::add_zoom_levels( const std::string& url ) noexcept(true)
 
 ure::void_t  Map::on_mouse_scroll( [[maybe_unused]] ure::Window* pWindow, [[maybe_unused]] ure::double_t dOffsetX, [[maybe_unused]] ure::double_t dOffsetY ) noexcept 
 {
-  ure::SceneLayerNode* current_layer_node = m_pViewPort->get_scene()->get_scene_node<ure::SceneLayerNode>("SceneNode", core::utils::format("Layer%d", m_curLevel ) );
+  ure::SceneLayerNode* current_layer_node = m_pViewPort->get_scene().get_scene_node<ure::SceneLayerNode>("SceneNode", core::utils::format("Layer%d", m_curLevel ) );
   ure::SceneLayerNode* new_layer_node     = nullptr;
 
   // Increase level
@@ -218,7 +220,7 @@ ure::void_t  Map::on_mouse_scroll( [[maybe_unused]] ure::Window* pWindow, [[mayb
       --m_curLevel;
   }
 
-  new_layer_node = m_pViewPort->get_scene()->get_scene_node<ure::SceneLayerNode>("SceneNode", core::utils::format("Layer%d", m_curLevel ) );
+  new_layer_node = m_pViewPort->get_scene().get_scene_node<ure::SceneLayerNode>("SceneNode", core::utils::format("Layer%d", m_curLevel ) );
 
   if ( current_layer_node )
   {
@@ -246,7 +248,7 @@ ure::void_t Map::on_mouse_move( [[maybe_unused]] ure::Window* pWindow, [[maybe_u
   {
     ure::Position_d  _delta_pos = m_mouse_last_pos - ure::Position_d( x, y );
     
-    ure::SceneLayerNode* _tile_layer = m_pViewPort->get_scene()->get_scene_node<ure::SceneLayerNode>("SceneNode", core::utils::format("Layer%d", m_curLevel ) );
+    ure::SceneLayerNode* _tile_layer = m_pViewPort->get_scene().get_scene_node<ure::SceneLayerNode>("SceneNode", core::utils::format("Layer%d", m_curLevel ) );
     _tile_layer->get_model_matrix().translate( -1.0f*_delta_pos.x, -1.0f*_delta_pos.y, 0 );
     
     printf( "delta x:%f delta y:%f\n", _delta_pos.x, _delta_pos.y );
@@ -320,7 +322,7 @@ ure::void_t Map::on_run()
   m_pViewPort->use();
 
   // Update background color
-  m_pViewPort->get_scene()->set_background( 0.2f, 0.2f, 0.2f, 0.0f );
+  m_pViewPort->get_scene().set_background( 0.2f, 0.2f, 0.2f, 0.0f );
 
   ///////////////
   m_pViewPort->clear_buffer( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );
