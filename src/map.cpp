@@ -119,7 +119,8 @@ void Map::init( [[__maybe_unused__]] int argc, [[__maybe_unused__]] char** argv 
     return ;
   }
 
-  glm::mat4 mProjection = glm::perspectiveFov(45.0f, (float)m_size.width, (float)m_size.height, 0.1f, 1000.0f);
+  //glm::mat4 mProjection = glm::ortho( 0.0f, 1.0f*m_size.width, 1.0f*m_size.height, 0.0f, -1.0f, 1.0f );
+  glm::mat4 mProjection = glm::mat4(1.0f);
 
   m_pViewPort   = new(std::nothrow) ure::ViewPort( std::move(scene_graph), mProjection );
   if ( m_pViewPort == nullptr )
@@ -185,9 +186,9 @@ void Map::add_zoom_levels( const std::string& url ) noexcept(true)
 
     ure::SceneLayerNode* pNode = new(std::nothrow) ure::SceneLayerNode( core::utils::format("Layer%d", zl ), layer );
     
-    ure::float_t mx = m_size.width/2;
-    ure::float_t my = m_size.height/2;
-    glm::mat4 mModel =  glm::ortho( -1.0f*(float)m_size.width/2, (float)m_size.width/2, (float)m_size.height/2, -1.0f*(float)m_size.height/2, 1.0f, 100.0f );
+    //ure::float_t mx = m_size.width/2;
+    //ure::float_t my = m_size.height/2;
+    glm::mat4 mModel =  glm::ortho( -1.0f*m_size.width/2, 1.0f*m_size.width/2, 1.0f*m_size.height/2, -1.0f*m_size.height/2 );
     //glm::mat4 mModel = glm::mat4(1); //glm::ortho( -1.0f*mx, mx, my, -1.0f*my, 0.1f, 1000.0f );
 
     pNode->set_model_matrix( mModel );
@@ -249,6 +250,7 @@ ure::void_t Map::on_mouse_move( [[maybe_unused]] ure::Window* pWindow, [[maybe_u
     ure::Position_d  _delta_pos = m_mouse_last_pos - ure::Position_d( x, y );
     
     ure::SceneLayerNode* _tile_layer = m_pViewPort->get_scene().get_scene_node<ure::SceneLayerNode>("SceneNode", core::utils::format("Layer%d", m_curLevel ) );
+    
     _tile_layer->get_model_matrix().translate( -1.0f*_delta_pos.x, -1.0f*_delta_pos.y, 0 );
     
     printf( "delta x:%f delta y:%f\n", _delta_pos.x, _delta_pos.y );
