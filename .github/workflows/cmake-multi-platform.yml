@@ -55,7 +55,7 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
     
     - name: Install dependencies on ubuntu
-      #if: startsWith( matrix.cpp_compiler, 'gcc') 
+      if: startsWith( matrix.cpp_compiler, 'g++') 
       run: |
         sudo apt-get update
         sudo apt-get install ninja-build cmake
