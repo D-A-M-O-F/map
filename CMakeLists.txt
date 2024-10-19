@@ -44,20 +44,26 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
-add_subdirectory(submodules/ure)
+
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+message(STATUS "${PROJECT_SOURCE_DIR}")
+
+include(FetchContent)
+#add_subdirectory(submodules/ure)
+include(ure)
 
 message( "PARENT_DEFINITIONS: ${PARENT_DEFINITIONS}" )
 message( "PARENT_LIBS       : ${PARENT_LIBS}"        )
 add_definitions( ${PARENT_DEFINITIONS} )
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include                                     )
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/include                      )
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/3rd-party/glad/include       )
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/submodules/lock-free/include )
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/submodules/glm               )
-
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/submodules/libsigc++         )
-include_directories( ${CMAKE_CURRENT_BINARY_DIR}/submodules/ure/submodules/libsigc++         ) # necessary for sigc++config.h
+#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/include                      )
+#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/3rd-party/glad/include       )
+#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/submodules/lock-free/include )
+#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/submodules/glm               )
+#
+#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/submodules/libsigc++         )
+#include_directories( ${CMAKE_CURRENT_BINARY_DIR}/submodules/ure/submodules/libsigc++         ) # necessary for sigc++config.h
 
 
 # uncomment to set a default CXX standard for the external tools like clang-tidy and cppcheck
