@@ -2,6 +2,7 @@ FetchContent_Declare(
   ure
   GIT_REPOSITORY https://github.com/fe-dagostino/ure.git
   GIT_TAG        master # master
+  GIT_SHALLOW    TRUE
 )
 
 FetchContent_MakeAvailable(ure)

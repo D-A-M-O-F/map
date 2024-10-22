@@ -28,28 +28,10 @@ if ( URE_WINDOWS_MANAGER STREQUAL "" )
 endif()
 
 
-
-find_package(Git)
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-    # Update submodules as needed
-    option(GIT_SUBMODULE "Update submodules with remote" ON)
-    if(GIT_SUBMODULE)
-        message(STATUS "Submodule update")
-        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive --remote -f
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
-        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-            message(FATAL_ERROR "git submodule update --init --recursive --remote -f : failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-        endif()
-    endif()
-endif()
-
-
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 message(STATUS "${PROJECT_SOURCE_DIR}")
 
 include(FetchContent)
-#add_subdirectory(submodules/ure)
 include(ure)
 
 message( "PARENT_DEFINITIONS: ${PARENT_DEFINITIONS}" )
@@ -57,14 +39,6 @@ message( "PARENT_LIBS       : ${PARENT_LIBS}"        )
 add_definitions( ${PARENT_DEFINITIONS} )
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include                                     )
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/include                      )
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/3rd-party/glad/include       )
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/submodules/lock-free/include )
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/submodules/glm               )
-#
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/submodules/ure/submodules/libsigc++         )
-#include_directories( ${CMAKE_CURRENT_BINARY_DIR}/submodules/ure/submodules/libsigc++         ) # necessary for sigc++config.h
-
 
 # uncomment to set a default CXX standard for the external tools like clang-tidy and cppcheck
 # and the targets that do not specify a standard.
