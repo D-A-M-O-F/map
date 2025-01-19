@@ -48,7 +48,11 @@ bool     TileLayer::on_widget_draw( [[maybe_unused]] const ure::Recti& rect ) no
 
       if ( texture.has_value() == false )
       {
-        ure::ResourcesFetcher::get_instance()->fetch( *this, name, typeid(ure::Texture), resource );
+        ure::ResourcesFetcher::get_instance()->fetch( *this, name, typeid(ure::Texture), resource, 
+                                                      ure::ResourcesFetcher::customer_request_t::Get,
+                                                      ure::ResourcesFetcher::http_headers_t{},
+                                                      std::string{}
+                                                    );
       }
       else
       {
@@ -135,7 +139,10 @@ ure::void_t TileLayer::on_download_succeeded( [[maybe_unused]] const std::string
         // @todo
       }
     }
-    //ure::ResourcesCollector::get_instance()->attach( name,  )
+    else
+    {
+      // @todo
+    }
   }
 }
 
