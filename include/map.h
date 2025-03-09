@@ -83,16 +83,16 @@ protected:
   /***/
   virtual ure::void_t on_initialize_error(/* @todo */) override;
   /***/
-  virtual ure::void_t on_error( [[maybe_unused]] int32_t error, [[maybe_unused]] const std::string& description ) override;
+  virtual ure::void_t on_error( [[maybe_unused]] int32_t error, [[maybe_unused]] std::string_view description ) override;
   /***/
   virtual ure::void_t on_finalize_error(/* @todo */) override;
 
 // ure::ResourcesFetcherEvents implementation
 protected:  
   /***/
-  virtual ure::void_t on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) noexcept(true) override;
+  virtual ure::void_t on_download_succeeded( [[maybe_unused]] std::string_view name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) noexcept(true) override;
   /***/
-  virtual ure::void_t on_download_failed   ( [[maybe_unused]] const std::string& name ) noexcept(true) override;
+  virtual ure::void_t on_download_failed   ( [[maybe_unused]] std::string_view name ) noexcept(true) override;
 
 private:
   using resource_collector_t = std::unique_ptr<ure::ResourcesCollector>;

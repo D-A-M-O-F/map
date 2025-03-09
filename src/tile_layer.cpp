@@ -115,9 +115,9 @@ bool     TileLayer::on_widget_draw( [[maybe_unused]] const ure::Recti& rect ) no
 // ure::ResourcesFetcherEvents implementation
 /////////////////////////////////////////////////////
 
-ure::void_t TileLayer::on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) noexcept(true)
+ure::void_t TileLayer::on_download_succeeded( [[maybe_unused]] std::string_view name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) noexcept(true)
 {
-  if ( m_rc->contains( name ) == false )
+  if ( m_rc->contains( name.data() ) == false )
   {
     if ( typeid(ure::Texture) == type )
     {
@@ -127,7 +127,7 @@ ure::void_t TileLayer::on_download_succeeded( [[maybe_unused]] const std::string
       {
         std::unique_ptr<ure::Texture>  txt = std::make_unique<ure::Texture>( std::move(bkImage) );
 
-        auto result = m_rc->attach<ure::Texture>( name,  std::move(txt) );  
+        auto result = m_rc->attach<ure::Texture>( name.data(),  std::move(txt) );  
         if ( result.first == false )
         {
           // @todo
@@ -146,7 +146,7 @@ ure::void_t TileLayer::on_download_succeeded( [[maybe_unused]] const std::string
   }
 }
 
-ure::void_t TileLayer::on_download_failed   ( [[maybe_unused]] const std::string& name ) noexcept(true)
+ure::void_t TileLayer::on_download_failed   ( [[maybe_unused]] std::string_view name ) noexcept(true)
 {
 
 }

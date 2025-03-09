@@ -142,7 +142,7 @@ void Map::load_resources() noexcept(true)
 
   bkImage.load( ure::Image::loader_t::eStb, "./resources/media/images/0-0-0.png" );
 
-  std::unique_ptr<ure::Texture>  txt = std::make_unique<ure::Texture>( std::move(bkImage) );
+  std::shared_ptr<ure::Texture>  txt = std::make_shared<ure::Texture>( std::move(bkImage) );
 
   auto result = m_rc->attach<ure::Texture>("0-0-0", std::move(txt) );  
   if ( result.first == false )
@@ -347,7 +347,7 @@ ure::void_t Map::on_initialize_error(/* @todo */)
 
 }
 
-ure::void_t Map::on_error( [[maybe_unused]] int32_t error, [[maybe_unused]] const std::string& description )
+ure::void_t Map::on_error( [[maybe_unused]] int32_t error, [[maybe_unused]] std::string_view description )
 {
 
 }
@@ -362,9 +362,9 @@ ure::void_t Map::on_finalize_error(/* @todo */)
 // ure::ResourcesFetcherEvents implementation
 /////////////////////////////////////////////////////
 
-ure::void_t Map::on_download_succeeded( [[maybe_unused]] const std::string& name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) noexcept(true)
+ure::void_t Map::on_download_succeeded( [[maybe_unused]] std::string_view name, [[maybe_unused]] const std::type_info& type, [[maybe_unused]] const ure::byte_t* data, [[maybe_unused]] ure::uint_t length ) noexcept(true)
 {
-  if ( m_rc->contains( name ) == false )
+  if ( m_rc->contains( name.data() ) == false )
   {
     if ( typeid(ure::Texture) == type )
     {
@@ -372,9 +372,9 @@ ure::void_t Map::on_download_succeeded( [[maybe_unused]] const std::string& name
 
       if ( bkImage.create( ure::Image::loader_t::eStb, data, length ) == true )
       {
-        std::unique_ptr<ure::Texture>  txt = std::make_unique<ure::Texture>( std::move(bkImage) );
+        std::shared_ptr<ure::Texture>  txt = std::make_shared<ure::Texture>( std::move(bkImage) );
 
-        auto result = m_rc->attach<ure::Texture>( name,  std::move(txt) );  
+        auto result = m_rc->attach<ure::Texture>( name.data(), std::move(txt) );
         if ( result.first == false )
         {
           // @todo
@@ -390,7 +390,7 @@ ure::void_t Map::on_download_succeeded( [[maybe_unused]] const std::string& name
   }
 }
 
-ure::void_t Map::on_download_failed   ( [[maybe_unused]] const std::string& name ) noexcept(true)
+ure::void_t Map::on_download_failed   ( [[maybe_unused]] std::string_view name ) noexcept(true)
 {
 
 }
