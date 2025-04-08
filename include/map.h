@@ -67,25 +67,25 @@ protected:
 // ure::ApplicationEvents implementation  
 protected:
   /***/
-  virtual ure::void_t on_initialize() override;
+  virtual ure::void_t on_initialize() noexcept(true) override;
 
   /***/
-  virtual ure::void_t on_initialized() override;
+  virtual ure::void_t on_initialized() noexcept(true) override;
 
   /***/
-  virtual ure::void_t on_finalize() override;
+  virtual ure::void_t on_finalize() noexcept(true) override;
 
   /***/
-  virtual ure::void_t on_finalized() override;
+  virtual ure::void_t on_finalized() noexcept(true) override;
 
-  virtual ure::void_t on_run() override; 
+  virtual ure::void_t on_run() noexcept(true) override;
 
   /***/
-  virtual ure::void_t on_initialize_error(/* @todo */) override;
+  virtual ure::void_t on_initialize_error(/* @todo */) noexcept(true) override;
   /***/
-  virtual ure::void_t on_error( [[maybe_unused]] int32_t error, [[maybe_unused]] std::string_view description ) override;
+  virtual ure::void_t on_error( [[maybe_unused]] int32_t error, [[maybe_unused]] std::string_view description ) noexcept(true) override;
   /***/
-  virtual ure::void_t on_finalize_error(/* @todo */) override;
+  virtual ure::void_t on_finalize_error(/* @todo */) noexcept(true) override;
 
 // ure::ResourcesFetcherEvents implementation
 protected:  

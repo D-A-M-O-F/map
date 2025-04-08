@@ -291,26 +291,26 @@ ure::void_t Map::on_mouse_button_released( [[maybe_unused]] ure::Window* pWindow
 // ure::ApplicationEvents implementation
 /////////////////////////////////////////////////////
 
-ure::void_t Map::on_initialize() 
+ure::void_t Map::on_initialize() noexcept(true)
 {
   ure::ResourcesFetcher::initialize( );
 }
 
-ure::void_t Map::on_initialized() 
+ure::void_t Map::on_initialized() noexcept(true)
 {
 }
 
-ure::void_t Map::on_finalize() 
+ure::void_t Map::on_finalize() noexcept(true)
 {
   ure::ResourcesFetcher::get_instance()->finalize();
 }
 
-ure::void_t Map::on_finalized() 
+ure::void_t Map::on_finalized() noexcept(true)
 {
 
 }
 
-ure::void_t Map::on_run()
+ure::void_t Map::on_run() noexcept(true)
 {
   if ( m_pWindow->check( ure::Window::window_flag_t::eWindowShouldClose ) )
   {
@@ -342,17 +342,17 @@ ure::void_t Map::on_run()
   ure::Application::get_instance()->poll_events();  
 }
 
-ure::void_t Map::on_initialize_error(/* @todo */) 
+ure::void_t Map::on_initialize_error(/* @todo */) noexcept(true)
 {
 
 }
 
-ure::void_t Map::on_error( [[maybe_unused]] int32_t error, [[maybe_unused]] std::string_view description )
+ure::void_t Map::on_error( [[maybe_unused]] int32_t error, [[maybe_unused]] std::string_view description ) noexcept(true)
 {
 
 }
 
-ure::void_t Map::on_finalize_error(/* @todo */) 
+ure::void_t Map::on_finalize_error(/* @todo */) noexcept(true)
 {
 
 }
