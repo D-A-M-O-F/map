@@ -51,10 +51,10 @@ jobs:
         sudo apt install -y ninja-build cmake
         sudo apt install -y gcc-14 g++-14
         sudo apt install -y cppcheck
+        sudo apt install -y libgl1-mesa-dev
         sudo apt install -y libfreetype-dev
         sudo apt install -y libcurlpp-dev
         sudo apt install -y libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev
-        sudo apt install -y libmesa-dev
         sudo apt install -y libxkbcommon-dev
         sudo apt install -y libwayland-dev libwayland-bin
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 --slave /usr/bin/g++ g++ /usr/bin/g++-14 --slave /usr/bin/gcov gcov /usr/bin/gcov-14
